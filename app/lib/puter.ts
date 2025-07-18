@@ -1,5 +1,53 @@
 import { create } from "zustand";
 
+// I'm adding the AIResponse and other relevant types here for completeness,
+// assuming they might look something like this. Adjust if your actual types differ.
+interface PuterUser {
+    username: string;
+    // other user properties
+}
+
+interface FSItem {
+    path: string;
+    // other fs item properties
+}
+
+interface ChatMessage {
+    role: "user" | "assistant";
+    content: string | (TextContent | FileContent)[];
+}
+
+interface TextContent {
+    type: "text";
+    text: string;
+}
+
+interface FileContent {
+    type: "file";
+    puter_path: string;
+}
+
+interface AIResponse {
+    success: boolean;
+    message: {
+        content: string | { type: string, text: string }[];
+    };
+    // other AI response properties
+}
+
+interface KVItem {
+    key: string;
+    value: string;
+}
+
+// --- CORRECTED SECTION 1: PuterChatOptions and Global Declaration ---
+// This options object will hold all possible parameters like model, stream, etc.
+interface PuterChatOptions {
+    model?: string;
+    stream?: boolean;
+    testMode?: boolean; // testMode would be a property inside options
+}
+
 declare global {
     interface Window {
         puter: {
@@ -20,12 +68,11 @@ declare global {
                 readdir: (path: string) => Promise<FSItem[] | undefined>;
             };
             ai: {
+                // Corrected signature: only two arguments
                 chat: (
                     prompt: string | ChatMessage[],
-                    imageURL?: string | PuterChatOptions,
-                    testMode?: boolean,
                     options?: PuterChatOptions
-                ) => Promise<Object>;
+                ) => Promise<any>;
                 img2txt: (
                     image: string | File | Blob,
                     testMode?: boolean
@@ -65,11 +112,11 @@ interface PuterStore {
         delete: (path: string) => Promise<void>;
         readDir: (path: string) => Promise<FSItem[] | undefined>;
     };
+    // --- CORRECTED SECTION 2: Store Interface ---
     ai: {
+        // Corrected signature: only two arguments
         chat: (
             prompt: string | ChatMessage[],
-            imageURL?: string | PuterChatOptions,
-            testMode?: boolean,
             options?: PuterChatOptions
         ) => Promise<AIResponse | undefined>;
         feedback: (
@@ -100,6 +147,7 @@ const getPuter = (): typeof window.puter | null =>
     typeof window !== "undefined" && window.puter ? window.puter : null;
 
 export const usePuterStore = create<PuterStore>((set, get) => {
+    // ... (setError, auth functions, init, fs functions all remain the same) ...
     const setError = (msg: string) => {
         set({
             error: msg,
@@ -310,21 +358,18 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         return puter.fs.delete(path);
     };
 
+    // --- CORRECTED SECTION 3: The `chat` function implementation ---
     const chat = async (
         prompt: string | ChatMessage[],
-        imageURL?: string | PuterChatOptions,
-        testMode?: boolean,
-        options?: PuterChatOptions
+        options?: PuterChatOptions // Corrected signature
     ) => {
         const puter = getPuter();
         if (!puter) {
             setError("Puter.js not available");
             return;
         }
-        // return puter.ai.chat(prompt, imageURL, testMode, options);
-        return puter.ai.chat(prompt, imageURL, testMode, options) as Promise<
-            AIResponse | undefined
-        >;
+        // Correctly passes arguments to the underlying API
+        return puter.ai.chat(prompt, options) as Promise<AIResponse | undefined>;
     };
 
     const feedback = async (path: string, message: string) => {
@@ -334,24 +379,32 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             return;
         }
 
-        return puter.ai.chat(
-            [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "file",
-                            puter_path: path,
-                        },
-                        {
-                            type: "text",
-                            text: message,
-                        },
-                    ],
-                },
-            ],
-            { model: "claude-sonnet-4" }
-        ) as Promise<AIResponse | undefined>;
+        const chatPayload: ChatMessage[] = [
+            {
+                role: "user",
+                content: [
+                    { type: "file", puter_path: path },
+                    { type: "text", text: message },
+                ],
+            },
+        ];
+
+        try {
+            console.log("Attempting analysis with primary model: google/gemini-2.5-pro");
+            const response = await chat(chatPayload, { model: 'google/gemini-2.5-pro' });
+            return response;
+        } catch (primaryError) {
+            console.warn("Primary model (Gemini 2.5 Pro) failed:", primaryError);
+            console.log("Attempting analysis with fallback model: google/gemini-2.5-flash");
+
+            try {
+                const fallbackResponse = await chat(chatPayload, { model: 'google/gemini-2.5-flash' });
+                return fallbackResponse;
+            } catch (fallbackError) {
+                console.error("Both primary and fallback AI models failed. Final error:", fallbackError);
+                throw fallbackError;
+            }
+        }
     };
 
     const img2txt = async (image: string | File | Blob, testMode?: boolean) => {
@@ -363,6 +416,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         return puter.ai.img2txt(image, testMode);
     };
 
+    // ... (kv functions remain the same) ...
     const getKV = async (key: string) => {
         const puter = getPuter();
         if (!puter) {
@@ -411,6 +465,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         return puter.kv.flush();
     };
 
+
     return {
         isLoading: true,
         error: null,
@@ -431,13 +486,13 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             upload: (files: File[] | Blob[]) => upload(files),
             delete: (path: string) => deleteFile(path),
         },
+        // --- CORRECTED SECTION 4: The exported `ai` object ---
         ai: {
+            // Corrected signature
             chat: (
                 prompt: string | ChatMessage[],
-                imageURL?: string | PuterChatOptions,
-                testMode?: boolean,
                 options?: PuterChatOptions
-            ) => chat(prompt, imageURL, testMode, options),
+            ) => chat(prompt, options),
             feedback: (path: string, message: string) => feedback(path, message),
             img2txt: (image: string | File | Blob, testMode?: boolean) =>
                 img2txt(image, testMode),
