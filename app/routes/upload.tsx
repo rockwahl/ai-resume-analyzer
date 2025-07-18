@@ -85,12 +85,7 @@ const Upload = () =>{
             setStatusText('Analysis complete! You can now view your feedback.');
             console.log(data);
 
-            // Optional: Redirect to a results page
-            // setTimeout(() => navigate(`/results/${uuid}`), 2000);
-
-            // For now, let's stop the processing so the user sees the final message
-            setIsProcessing(false);
-
+            navigate(`/resume/${uuid}`);
 
         } catch (error) {
             console.error("An error occurred during analysis:", error);
