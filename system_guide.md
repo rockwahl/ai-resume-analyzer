@@ -72,4 +72,52 @@ This document tracks the components and functionality in the AI Resume Analyzer 
 - **Accordion Features**:
   - Multiple sections can be open simultaneously
   - Hover effects and smooth transitions
-  - Clean, organized layout for easy navigation 
+  - Clean, organized layout for easy navigation
+
+
+
+## AI Analysis Configuration
+
+### Prompt Engineering
+- **Location**: `constants/index.ts`
+- **Purpose**: Configure AI instructions for resume analysis
+- **Features**:
+  - Uses placeholder format instead of literal examples to prevent AI from copying example content
+  - Clear instructions to analyze actual resume content
+  - Structured JSON format with descriptive placeholders
+  - Emphasis on analyzing the uploaded PDF file specifically
+- **Format**: Uses `[PLACEHOLDER_TEXT]` format to guide AI without providing literal content to copy
+
+### AI Model Configuration
+- **Location**: `app/lib/puter.ts`
+- **Purpose**: Configure high-quality AI models for resume analysis
+- **Primary Model**: `claude-opus-4` - Highest quality Claude model for complex analysis with vision capabilities
+- **Fallback Models**: 
+  - `claude-sonnet-4` - Excellent for complex analysis tasks with vision capabilities
+  - `gpt-4o` - Strong vision and analysis capabilities as final fallback
+- **Features**: Multiple fallback options to ensure analysis completion with highest quality primary model
+
+### Wipe/Manage Page
+- **Location**: `app/routes/wipe.tsx`
+- **Purpose**: Manage and delete individual resumes or clear all data
+- **Features**:
+  - **Individual Resume Management**: View and delete specific resumes
+  - **Bulk Delete Option**: Delete all resumes at once with confirmation
+  - **Resume Information Display**: Shows company name, job title, and resume ID
+  - **Navigation Integration**: Includes navbar for easy navigation back to home
+  - **Loading States**: Proper loading indicators and error handling
+  - **Confirmation Dialogs**: Prevents accidental deletions
+  - **View Resume Link**: Quick access to view individual resume analysis
+- **Actions**:
+  - **View**: Navigate to resume analysis page
+  - **Delete Individual**: Remove specific resume with confirmation
+  - **Delete All**: Clear all resumes with double confirmation
+- **Styling**: Consistent with app design using Tailwind CSS classes
+
+## Technical Notes
+
+### KV Store Implementation
+- **Location**: `app/lib/puter.ts`
+- **Key Detail**: Puter KV store uses `del()` method, not `delete()` for deletion operations
+- **File Cleanup**: Puter automatically cleans up uploaded files, so file deletion errors are normal and expected
+- **Error Handling**: File deletion failures are gracefully handled since KV entry deletion is the critical operation 

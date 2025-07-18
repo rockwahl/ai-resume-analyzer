@@ -47,16 +47,14 @@ const Upload = () =>{
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
             setStatusText('Analyzing...');
+            
             const feedbackResponse = await ai.feedback(
                 uploadedFile.path,
-                // =========================================================
-                // THIS IS THE ONLY LINE THAT NEEDED TO BE CHANGED
-                // It now matches the new, simpler function signature.
                 prepareInstructions({ jobTitle, jobDescription })
-                // =========================================================
             );
 
             if(!feedbackResponse || !feedbackResponse.message?.content) {
+                console.error('Invalid AI response:', feedbackResponse);
                 throw new Error('AI analysis returned an invalid response.');
             }
 
@@ -65,7 +63,6 @@ const Upload = () =>{
                 : Array.isArray(feedbackResponse.message.content) && feedbackResponse.message.content[0]?.text
                     ? feedbackResponse.message.content[0].text
                     : '';
-
 
             const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {

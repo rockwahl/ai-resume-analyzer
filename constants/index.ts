@@ -75,37 +75,37 @@ export const resumes: Resume[] = [
 // This is a clean, valid JSON string that shows the AI exactly what to produce.
 // This is far more reliable than giving it a TypeScript interface.
 export const JSON_EXAMPLE_FORMAT = `{
-  "overallScore": 85,
+  "overallScore": [SCORE_BETWEEN_0_100],
   "ATS": {
-    "score": 90,
+    "score": [SCORE_BETWEEN_0_100],
     "tips": [
-      { "type": "good", "tip": "Well-formatted for parsers" },
-      { "type": "improve", "tip": "Include more keywords from the job description" }
+      { "type": "good", "tip": "[DESCRIBE_WHAT_RESUME_DOES_WELL_FOR_ATS]" },
+      { "type": "improve", "tip": "[SUGGEST_SPECIFIC_ATS_IMPROVEMENTS]" }
     ]
   },
   "toneAndStyle": {
-    "score": 80,
+    "score": [SCORE_BETWEEN_0_100],
     "tips": [
-      { "type": "good", "tip": "Professional Tone", "explanation": "The tone is professional and suitable for the role." },
-      { "type": "improve", "tip": "Use More Action Verbs", "explanation": "Replace passive phrases with stronger action verbs to show more impact." }
+      { "type": "good", "tip": "[DESCRIBE_GOOD_TONE_OR_STYLE]", "explanation": "[EXPLAIN_WHY_THIS_TONE_STYLE_IS_EFFECTIVE]" },
+      { "type": "improve", "tip": "[SUGGEST_TONE_STYLE_IMPROVEMENTS]", "explanation": "[EXPLAIN_HOW_TO_IMPROVE_TONE_STYLE]" }
     ]
   },
   "content": {
-    "score": 75,
+    "score": [SCORE_BETWEEN_0_100],
     "tips": [
-      { "type": "improve", "tip": "Quantify Achievements", "explanation": "Instead of saying 'Managed projects', try 'Managed 5 projects, increasing efficiency by 15%." }
+      { "type": "improve", "tip": "[SUGGEST_CONTENT_IMPROVEMENTS]", "explanation": "[EXPLAIN_HOW_TO_IMPROVE_CONTENT]" }
     ]
   },
   "structure": {
-    "score": 95,
+    "score": [SCORE_BETWEEN_0_100],
     "tips": [
-      { "type": "good", "tip": "Clear and Logical", "explanation": "The resume is well-structured and easy to follow." }
+      { "type": "good", "tip": "[DESCRIBE_GOOD_STRUCTURE]", "explanation": "[EXPLAIN_WHY_STRUCTURE_IS_EFFECTIVE]" }
     ]
   },
   "skills": {
-    "score": 80,
+    "score": [SCORE_BETWEEN_0_100],
     "tips": [
-      { "type": "improve", "tip": "Match Skills to Job", "explanation": "Tailor the skills section to better match the key technologies listed in the job description." }
+      { "type": "improve", "tip": "[SUGGEST_SKILLS_IMPROVEMENTS]", "explanation": "[EXPLAIN_HOW_TO_IMPROVE_SKILLS_SECTION]" }
     ]
   }
 }`;
@@ -120,14 +120,18 @@ export const prepareInstructions = ({
     jobTitle: string;
     jobDescription: string;
 }) =>
-    `You are an expert resume analyst. Analyze the provided resume based on the job title and description.
+    `You are an expert resume analyst. Analyze the provided resume PDF file based on the job title and description.
 Provide a detailed, critical review with scores and actionable tips. Be strict with scoring to provide the most value.
+
+IMPORTANT: Analyze the ACTUAL content of the uploaded resume file. Do NOT use placeholder or example content.
 
 The job title is: ${jobTitle}
 The job description is: "${jobDescription}"
 
 You MUST respond with a JSON object that follows this exact structure and format:
 ${JSON_EXAMPLE_FORMAT}
+
+Replace all placeholder text (like [SCORE_BETWEEN_0_100], [DESCRIBE_GOOD_TONE_OR_STYLE], etc.) with your actual analysis of the resume.You can add as many tips and write as much as you want to be as helpful as possible with each section of the resume. As long as it follows the format the system expects to recieve!
 
 Your response MUST be ONLY the raw JSON object, starting with { and ending with }.
 Do NOT include the word "json", markdown backticks, or any other text, comments, or explanations before or after the JSON object.`;

@@ -389,20 +389,30 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             },
         ];
 
+
+
         try {
-            console.log("Attempting analysis with primary model: google/gemini-2.5-pro");
-            const response = await chat(chatPayload, { model: 'google/gemini-2.5-pro' });
+            console.log("Attempting analysis with primary model: claude-opus-4");
+            const response = await chat(chatPayload, { model: 'claude-opus-4' });
             return response;
         } catch (primaryError) {
-            console.warn("Primary model (Gemini 2.5 Pro) failed:", primaryError);
-            console.log("Attempting analysis with fallback model: google/gemini-2.5-flash");
+            console.warn("Primary model (Claude Opus 4) failed:", primaryError);
+            console.log("Attempting analysis with fallback model: claude-sonnet-4");
 
             try {
-                const fallbackResponse = await chat(chatPayload, { model: 'google/gemini-2.5-flash' });
+                const fallbackResponse = await chat(chatPayload, { model: 'claude-sonnet-4' });
                 return fallbackResponse;
             } catch (fallbackError) {
-                console.error("Both primary and fallback AI models failed. Final error:", fallbackError);
-                throw fallbackError;
+                console.warn("Second fallback model (Claude Sonnet 4) failed:", fallbackError);
+                console.log("Attempting analysis with final fallback model: gpt-4o");
+
+                try {
+                    const finalFallbackResponse = await chat(chatPayload, { model: 'gpt-4o' });
+                    return finalFallbackResponse;
+                } catch (finalError) {
+                    console.error("All AI models failed. Final error:", finalError);
+                    throw finalError;
+                }
             }
         }
     };
@@ -441,7 +451,13 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             setError("Puter.js not available");
             return;
         }
-        return puter.kv.delete(key);
+        
+        if (!puter.kv) {
+            throw new Error('KV store not available on Puter object');
+        }
+        
+        // Use 'del' method as per Puter KV API documentation
+        return (puter.kv as any).del(key);
     };
 
     const listKV = async (pattern: string, returnValues?: boolean) => {
